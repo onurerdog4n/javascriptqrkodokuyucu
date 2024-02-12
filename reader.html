@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Kod Okuyucu</title>
+</head>
+<body>
+  <video id="video" autoplay></video>
+  <canvas id="canvas" style="display: none;"></canvas>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script> <!-- jsQR kütüphanesini CDN'den çağırma -->
+
+  <script>
+    // Video elementini seçer
+    const video = document.getElementById('video');
+
+    // Kullanıcıdan kamera erişim izni alır
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      .then(stream => {
+        video.srcObject = stream;
+        video.play();
+      })
+      .catch(err => {
+        console.error('Kamera erişim izni alınamadı:', err);
+      });
+
+    // QR kodunu okumak için kullanılan işlev
+    function qrCodeReader() {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+
+      // Video elementinin boyutlarına uygun bir canvas oluştur
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      // Canvas'a video görüntüsünü çiz
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Canvas'tan görüntüyü al
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      // jsQR kütüphanesi kullanılarak QR kodunu oku
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+      if (code) {
+        // QR kodu bulundu, içeriği konsola yazdır
+        console.log('QR Kodu bulundu:', code.data);
+      } else {
+        // QR kodu bulunamadı
+        console.log('QR Kodu bulunamadı');
+      }
+
+      // Bir sonraki karede QR kodunu tekrar okumak için requestAnimationFrame kullan
+      requestAnimationFrame(qrCodeReader);
+    }
+
+    // QR kodunu okuma işlevini başlat
+    video.addEventListener('loadedmetadata', qrCodeReader);
+  </script>
+</body>
+</html>
